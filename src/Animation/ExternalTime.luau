@@ -15,9 +15,14 @@ local change = require(Package.Graph.change)
 -- Utility
 local nicknames = require(Package.Utility.nicknames)
 
-type ExternalTime = Types.StateObject<number>
+export type ExternalTime = Types.StateObject<number> & {
+	setActive: (ExternalTime, boolean) -> (),
+	isActive: (ExternalTime) -> boolean,
+}
 
-type Self = ExternalTime
+type Self = ExternalTime & {
+	_active: boolean,
+}
 
 local class = {}
 class.type = "State"
@@ -41,6 +46,7 @@ local function ExternalTime(
 			scope = scope,
 			validity = "invalid",
 			_EXTREMELY_DANGEROUS_usedAsValue = External.lastUpdateStep(),
+			_active = false
 		},
 		METATABLE
 	) :: any
@@ -58,6 +64,26 @@ local function ExternalTime(
 	return self
 end
 
+function class.setActive(
+	self: Self,
+	active: boolean
+)
+	if active ~= self._active then
+		self._active = active
+		if active then
+			change(self)
+		end
+	end
+end
+
+function class.isActive(
+	self: Self,
+	active: boolean
+): boolean
+	return self._active
+end
+
+
 function class._evaluate(
 	self: Self
 ): boolean
@@ -74,7 +100,9 @@ External.bindToUpdateStep(function(
 	externalNow: number
 ): ()
 	for _, timer in allTimers do
-		change(timer)
+		if timer:isActive() then
+			change(timer)
+		end
 	end
 end)
 

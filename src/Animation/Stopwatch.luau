@@ -19,6 +19,8 @@ local depend = require(Package.Graph.depend)
 local change = require(Package.Graph.change)
 -- State
 local peek = require(Package.State.peek)
+-- Animation
+local ExternalTime = require(Package.Animation.ExternalTime)
 -- Utility
 local nicknames = require(Package.Utility.nicknames)
 
@@ -33,7 +35,7 @@ type Self = Stopwatch & {
 	_measureTimeSince: number,
 	_playing: boolean,
 	_zeroFlag: boolean,
-	_timer: Types.StateObject<number>
+	_timer: ExternalTime.ExternalTime
 }
 
 local class = {}
@@ -93,6 +95,7 @@ function class.pause(
 	self: Self
 ): ()
 	if self._playing == true then
+		self._timer:setActive(false)
 		self._playing = false
 		change(self)
 	end
@@ -102,6 +105,7 @@ function class.unpause(
 	self: Self
 ): ()
 	if self._playing == false then
+		self._timer:setActive(true)
 		self._playing = true
 		self._measureTimeSince = peek(self._timer) - (
 			if self._zeroFlag then
